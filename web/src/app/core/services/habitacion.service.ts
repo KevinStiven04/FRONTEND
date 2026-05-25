@@ -7,7 +7,7 @@ import { HabitacionCreate, HabitacionRead, HabitacionUpdate } from '../../models
 
 @Injectable({ providedIn: 'root' })
 export class HabitacionService {
-  private readonly base = `${environment.apiUrl}/habitaciones`; 
+  private readonly base = `${environment.apiUrl}/habitaciones`;  // plural — coincide con el router de FastAPI
 
   constructor(private readonly http: HttpClient) {}
 
@@ -30,5 +30,10 @@ export class HabitacionService {
 
   delete(id: string): Observable<void> {
     return this.http.delete(`${this.base}/${id}`, { observe: 'response' }).pipe(map(() => undefined));
+  }
+
+  // Alterna disponible/ocupada — PATCH /habitaciones/{id}/cambiar-disponible
+  cambiarDisponible(id: string): Observable<HabitacionRead> {
+    return this.http.patch<HabitacionRead>(`${this.base}/${id}/cambiar-disponible`, {});
   }
 }
