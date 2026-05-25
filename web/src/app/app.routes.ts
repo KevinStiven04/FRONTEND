@@ -24,7 +24,7 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/habitacion/habitacion-list').then((m) => m.HabitacionListComponent),
       },
-      /*{
+      {
         path: 'reserva',
         loadComponent: () =>
           import('./features/reserva/reserva-list').then((m) => m.ReservaListComponent),
@@ -33,7 +33,7 @@ export const routes: Routes = [
         path: 'reserva_servicios',
         loadComponent: () =>
           import('./features/reserva_servicios/reserva_servicios-list').then((m) => m.ReservaServiciosListComponent),
-      },*/
+      },
       {
         path: 'servicios_adicionales',
         loadComponent: () =>
