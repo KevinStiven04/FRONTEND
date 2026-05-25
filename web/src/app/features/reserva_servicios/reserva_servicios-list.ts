@@ -1,11 +1,8 @@
-import { CurrencyPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AfterViewInit, Component, inject, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
@@ -13,33 +10,46 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { filter } from 'rxjs/operators';
 
 import { ServiciosAdicionalesService } from '../../core/services/servicios_adicionales.service';
-import { ServiciosAdicionalesRead } from '../../models/api.models';
-import { ServiciosAdicionalesDialogComponent, ServiciosAdicionalesDialogData } from './reserva_servicios-dialog';
+import { ReservaServiciosService } from '../../core/services/reserva_servicios.service';
+import { ServiciosAdicionalesRead, ReservaServiciosRead } from '../../models/api.models';
+import { ReservaServiciosDialogComponent, ReservaServiciosDialogData } from './reserva_servicios-dialog';
 
 @Component({
-  selector: 'app-servicios_adicionales-list',
+  selector: 'app-reserva_servicios-list',
   imports: [
-    CurrencyPipe,
     MatTableModule,
     MatPaginatorModule,
     MatButtonModule,
-    MatFormFieldModule,
     MatIconModule,
-    MatInputModule,
     MatProgressSpinnerModule,
     MatSnackBarModule,
   ],
-  templateUrl: './servicios_adicionales-list.html',
-  styleUrl: './servicios_adicionales-list.scss',
+  templateUrl: './reserva_servicios-list.html',
+  styleUrl: './reserva_servicios-list.scss',
 })
-export class ServiciosAdicionalesListComponent implements AfterViewInit {
-  private readonly svc = inject(ServiciosAdicionalesService);
+
+/**
+ * component ReservaServiciosListComponent
+ * description
+ * Componente encargado de gestionar la lista de servicios adicionales asociados a una reserva específica.
+ * Permite visualizar, añadir, editar y eliminar servicios mediante una tabla interactiva de Angular Material.
+ * 
+ * implements {AfterViewInit} Para vincular el paginador una vez inicializada la vista.
+ * implements {OnInit} Para cargar el catálogo de nombres de servicios al iniciar.
+ */
+export class ReservaServiciosListComponent implements AfterViewInit, OnInit {
+  private readonly svc = inject(ReservaServiciosService);
+  private readonly serviciosSvc = inject(ServiciosAdicionalesService);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(MatSnackBar);
 
-  readonly displayedColumns = ['nombre', 'precio', 'descripcion', 'acciones'];
-  readonly dataSource = new MatTableDataSource<ServiciosAdicionalesRead>([]);
+  readonly displayedColumns = ['servicio', 'cantidad', 'acciones'];
+  readonly dataSource = new MatTableDataSource<ReservaServiciosRead>([]);
   loading = true;
+
+  id_reserva = '';
+
+  private readonly servicios = signal<ServiciosAdicionalesRead[]>([]);
 
   @ViewChild(MatPaginator) set matPaginator(p: MatPaginator) {
     if (p) {
@@ -54,22 +64,32 @@ export class ServiciosAdicionalesListComponent implements AfterViewInit {
     this.dataSource.paginator = this.paginator;
   }
 
+  ngOnInit(): void {
+    this.serviciosSvc.list().subscribe({
+      next: (rows) => this.servicios.set(rows),
+      error: (err: HttpErrorResponse) =>
+        this.snack.open(this.msg(err), 'Cerrar', { duration: 6000 }),
+    });
+  }
+
   constructor() {
     this.reload();
   }
 
-  filtrar(query: string): void {
-    const q = query.trim().toLowerCase();
-    this.dataSource.filterPredicate = (row: ServiciosAdicionalesRead) =>
-      row.nombre_servicio.toLowerCase().includes(q) ||
-      (row.descripcion ?? '').toLowerCase().includes(q);
-    this.dataSource.filter = q || '';
+  nombreServicio(id: string): string {
+    return this.servicios().find(s => s.id_servicio === id)?.nombre_servicio ?? id;
   }
 
   reload(): void {
     this.loading = true;
-    this.svc.list().subscribe({
-      next: (rows) => {
+    // Usa listByReserva si hay id_reserva, si no carga vacío
+    if (!this.id_reserva) {
+      this.dataSource.data = [];
+      this.loading = false;
+      return;
+    }
+    this.svc.listByReserva(this.id_reserva).subscribe({
+      next: (rows: ReservaServiciosRead[]) => {
         this.dataSource.data = rows;
         this.loading = false;
       },
@@ -81,24 +101,31 @@ export class ServiciosAdicionalesListComponent implements AfterViewInit {
   }
 
   nuevo(): void {
-    this.open({ mode: 'create' });
+    this.open({ mode: 'create', id_reserva: this.id_reserva });
   }
 
-  editar(row: ServiciosAdicionalesRead): void {
-    this.open({ mode: 'edit', row });
+  editar(row: ReservaServiciosRead): void {
+    this.open({ mode: 'edit', id_reserva: row.id_reserva, row });
   }
-
-  private open(data: ServiciosAdicionalesDialogData): void {
+  /**
+   * Orquestador para abrir el diálogo modal de formulario.
+   * Si se confirma la acción, se recarga la lista.
+   * private
+   */
+  private open(data: ReservaServiciosDialogData): void {
     this.dialog
-      .open(ServiciosAdicionalesDialogComponent, { width: '480px', data })
+      .open(ReservaServiciosDialogComponent, { width: '480px', data })
       .afterClosed()
       .pipe(filter(Boolean))
       .subscribe(() => this.reload());
   }
-
-  eliminar(row: ServiciosAdicionalesRead): void {
-    if (!confirm(`¿Eliminar servicio ${row.nombre_servicio}?`)) return;
-    this.svc.delete(row.id_servicio).subscribe({
+  /**
+   * Solicita confirmación y elimina un servicio de la reserva.
+   * param {ReservaServiciosRead} row - El registro a eliminar.
+   */
+  eliminar(row: ReservaServiciosRead): void {
+    if (!confirm('¿Eliminar este servicio de la reserva?')) return;
+    this.svc.delete(row.id_reserva, row.id_servicio).subscribe({
       next: () => {
         this.snack.open('Servicio eliminado', 'OK', { duration: 3000 });
         this.reload();
@@ -107,7 +134,11 @@ export class ServiciosAdicionalesListComponent implements AfterViewInit {
         this.snack.open(this.msg(err), 'Cerrar', { duration: 6000 }),
     });
   }
-
+  /**
+   * Parsea errores de HttpErrorResponse para extraer mensajes amigables.
+   * Soporta tanto errores simples (string) como errores de validación de backend (arrays).
+   * private
+   */
   private msg(err: HttpErrorResponse): string {
     const d = err.error?.detail;
     if (typeof d === 'string') return d;

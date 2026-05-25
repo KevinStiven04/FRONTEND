@@ -1,13 +1,50 @@
+/**
+ * Plantilla de diálogo para la gestión de servicios asociados a reservas.
+ *
+ * Permite:
+ * - Registrar un nuevo servicio adicional en una reserva
+ * - Editar servicios previamente asociados
+ *
+ * Estructura funcional:
+ *
+ * 1. Encabezado dinámico:
+ *    - Modo creación
+ *    - Modo edición
+ *
+ * 2. Formulario reactivo:
+ *    - Selección de servicio
+ *    - Registro de cantidad
+ *
+ * 3. Validación:
+ *    - Servicio obligatorio
+ *    - Cantidad mínima requerida
+ *
+ * 4. Acciones:
+ *    - Cancelar operación
+ *    - Confirmar guardado
+ *
+ * Tecnologías:
+ * - Angular Reactive Forms
+ * - Angular Material Dialog
+ * - Angular Material Select
+ * - Angular Material Inputs
+ *
+ * Este componente facilita la administración
+ * de consumos o servicios adicionales
+ * vinculados a reservas específicas.
+ */
+
+ 
 <div class="dialog-header">
   <div class="dialog-header__icon">
-    <mat-icon>add_business</mat-icon>
+    <mat-icon>room_service</mat-icon>
   </div>
   <div class="dialog-header__text">
     <h2 class="dialog-header__title">
-      {{ data.mode === 'create' ? 'Nuevo Servicio' : 'Editar Servicio' }}
+      {{ data.mode === 'create' ? 'Agregar Servicio a Reserva' : 'Editar Servicio de Reserva' }}
     </h2>
     <p class="dialog-header__sub">
-      {{ data.mode === 'create' ? 'Completa los campos para agregar un servicio' : 'Modifica los datos del servicio' }}
+      {{ data.mode === 'create' ? 'Selecciona el servicio y la cantidad' : 'Modifica los datos del servicio' }}
     </p>
   </div>
 </div>
@@ -16,42 +53,28 @@
   <form [formGroup]="form" class="form-stack">
 
     <div class="field-group">
-      <label class="field-label">Nombre del servicio</label>
+      <label class="field-label">Servicio</label>
       <mat-form-field appearance="outline" class="field-full">
-        <input
-          matInput
-          formControlName="nombre_servicio"
-          placeholder="Ej: Spa con masaje"
-        />
-        <mat-error>El nombre es requerido</mat-error>
+        <mat-select formControlName="id_servicios" placeholder="Selecciona un servicio">
+          @for (s of servicios(); track s.id_servicio) {
+            <mat-option [value]="s.id_servicio">{{ s.nombre_servicio }}</mat-option>
+          }
+        </mat-select>
+        <mat-error>El servicio es requerido</mat-error>
       </mat-form-field>
     </div>
 
     <div class="field-group">
-      <label class="field-label">Precio</label>
+      <label class="field-label">Cantidad</label>
       <mat-form-field appearance="outline" class="field-full">
-        <span matTextPrefix class="prefix">$&nbsp;</span>
         <input
           matInput
           type="number"
-          step="0.01"
-          min="0"
-          formControlName="precio"
-          placeholder="0"
+          formControlName="cantidad"
+          placeholder="Ej: 2"
+          min="1"
         />
-        <mat-error>Ingresa un precio válido</mat-error>
-      </mat-form-field>
-    </div>
-
-    <div class="field-group">
-      <label class="field-label">Descripción</label>
-      <mat-form-field appearance="outline" class="field-full">
-        <textarea
-          matInput
-          rows="3"
-          formControlName="descripcion"
-          placeholder="Describe brevemente el servicio..."
-        ></textarea>
+        <mat-error>La cantidad debe ser mayor a 0</mat-error>
       </mat-form-field>
     </div>
 
@@ -64,12 +87,13 @@
   </button>
   <button
     mat-flat-button
+    color="primary"
     type="button"
     class="btn-save"
     [disabled]="form.invalid"
     (click)="save()"
   >
     <mat-icon>check</mat-icon>
-    {{ data.mode === 'create' ? 'Crear servicio' : 'Guardar cambios' }}
+    {{ data.mode === 'create' ? 'Agregar servicio' : 'Guardar cambios' }}
   </button>
 </mat-dialog-actions>
