@@ -34,6 +34,8 @@ export interface HabitacionDialogData {
     MatIconModule,
   ],
   templateUrl: './habitacion-dialog.html',
+    styleUrls: ['./habitacion-list.scss'],
+
 })
 export class HabitacionDialogComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
@@ -46,19 +48,33 @@ export class HabitacionDialogComponent implements OnInit {
   readonly data = inject<HabitacionDialogData>(MAT_DIALOG_DATA);
   readonly tipo_habitacion = signal<TipoHabitacionRead[]>([]);
 
-  // 'tipo' removido del form — se resuelve en save() desde tipo_habitacion signal
   readonly form = this.fb.nonNullable.group({
-    numero: [[Validators.required, Validators.min(1)]],
-    id_tipo: [[Validators.required, Validators.minLength(1)]],
-    precio:[[Validators.required, Validators.min(0)]],
-    disponible:[
-      this.data.mode === 'edit' ? (this.data.row?.disponible ?? true) : true
+    numero: [
+      this.data.mode === 'edit' ? (this.data.row?.numero ?? 0) : 0,
+      [Validators.required, Validators.min(1)],
+    ],
+    id_tipo: [
+      this.data.mode === 'edit' ? (this.data.row?.id_tipo ?? '') : '',
+      [Validators.required, Validators.minLength(1)],
+    ],
+    precio: [
+      this.data.mode === 'edit' ? (this.data.row?.precio ?? 0) : 0,
+      [Validators.required, Validators.min(0)],
+    ],
+    disponible: [
+      this.data.mode === 'edit' ? (this.data.row?.disponible ?? true) : true,
     ],
   });
 
   ngOnInit(): void {
     this.catSvc.list().subscribe({
-      next: (rows) => this.tipo_habitacion.set(rows),
+      next: (rows) => {
+        this.tipo_habitacion.set(rows);
+        // Re-setear id_tipo después de cargar opciones para que el select haga match
+        if (this.data.mode === 'edit' && this.data.row?.id_tipo) {
+          this.form.controls.id_tipo.setValue(this.data.row.id_tipo);
+        }
+      },
       error: (err: HttpErrorResponse) =>
         this.snack.open(this.msg(err), 'Cerrar', { duration: 6000 }),
     });
@@ -79,8 +95,9 @@ export class HabitacionDialogComponent implements OnInit {
       return;
     }
     const v = this.form.getRawValue();
+    const nombreTipo = this.tipo_habitacion().find(t => t.id_tipo === v.id_tipo)?.nombre_tipo ?? '';
+
     if (this.data.mode === 'create') {
-      const nombreTipo = this.tipo_habitacion().find(t => t.id_tipo === v.id_tipo)?.nombre_tipo ?? '';
       this.svc.create({
         numero:          v.numero,
         id_tipo:         v.id_tipo,
@@ -95,7 +112,7 @@ export class HabitacionDialogComponent implements OnInit {
       });
       return;
     }
-    const nombreTipo = this.tipo_habitacion().find(t => t.id_tipo === v.id_tipo)?.nombre_tipo ?? '';
+
     this.svc.update(this.data.row!.id_habitacion, {
       numero:           v.numero,
       id_tipo:          v.id_tipo,

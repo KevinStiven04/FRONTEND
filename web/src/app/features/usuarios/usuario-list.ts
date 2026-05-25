@@ -2,7 +2,9 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { AfterViewInit, Component, inject, ViewChild } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
@@ -19,7 +21,9 @@ import { UsuarioDialogComponent, UsuarioDialogData } from './usuario-dialog';
     MatTableModule,
     MatPaginatorModule,
     MatButtonModule,
+    MatFormFieldModule,
     MatIconModule,
+    MatInputModule,
     MatDialogModule,
     MatProgressSpinnerModule,
     MatSnackBarModule,
@@ -33,25 +37,19 @@ export class UsuarioListComponent implements AfterViewInit {
   private readonly snack = inject(MatSnackBar);
 
   readonly displayedColumns = [
-    'nombre',
-    'apellidos',
-    'telefono',
-    'tipo_usuario',
-    'nombre_usuario',
-    'acciones'
+    'nombre', 'apellidos', 'telefono', 'tipo_usuario', 'nombre_usuario', 'acciones',
   ];
   readonly dataSource = new MatTableDataSource<UsuarioRead>([]);
-
   loading = true;
 
   @ViewChild(MatPaginator) set matPaginator(p: MatPaginator) {
-  if (p) {
-    this.paginator = p;
-    this.dataSource.paginator = p;
+    if (p) {
+      this.paginator = p;
+      this.dataSource.paginator = p;
+    }
   }
-}
 
-paginator!: MatPaginator;
+  paginator!: MatPaginator;
 
   ngAfterViewInit(): void {
     this.dataSource.paginator = this.paginator;
@@ -59,6 +57,16 @@ paginator!: MatPaginator;
 
   constructor() {
     this.reload();
+  }
+
+  filtrar(query: string): void {
+    const q = query.trim().toLowerCase();
+    this.dataSource.filterPredicate = (row: UsuarioRead) =>
+      row.nombre.toLowerCase().includes(q) ||
+      row.apellidos.toLowerCase().includes(q) ||
+      row.nombre_usuario.toLowerCase().includes(q) ||
+      row.tipo_usuario.toLowerCase().includes(q);
+    this.dataSource.filter = q || '';
   }
 
   reload(): void {
@@ -98,7 +106,8 @@ paginator!: MatPaginator;
         this.snack.open('Usuario eliminado', 'OK', { duration: 3000 });
         this.reload();
       },
-      error: (err: HttpErrorResponse) => this.snack.open(this.msg(err), 'Cerrar', { duration: 6000 }),
+      error: (err: HttpErrorResponse) =>
+        this.snack.open(this.msg(err), 'Cerrar', { duration: 6000 }),
     });
   }
 

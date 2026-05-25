@@ -2,12 +2,13 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { AfterViewInit, Component, inject, ViewChild } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { CurrencyPipe } from '@angular/common'; // Para el formato de dinero
 import { filter } from 'rxjs/operators';
 
 import { TipoHabitacionService } from '../../core/services/tipo_habitacion.service';
@@ -16,15 +17,15 @@ import { TipoHabitacionDialogComponent, TipoHabitacionDialogData } from './tipo_
 
 @Component({
   selector: 'app-tipo_habitacion-list',
-  standalone: true,
   imports: [
     MatTableModule,
     MatPaginatorModule,
     MatButtonModule,
+    MatFormFieldModule,
     MatIconModule,
+    MatInputModule,
     MatProgressSpinnerModule,
     MatSnackBarModule,
-   
   ],
   templateUrl: './tipo_habitacion-list.html',
   styleUrl: './tipo_habitacion-list.scss',
@@ -34,24 +35,18 @@ export class TipoHabitacionListComponent implements AfterViewInit {
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(MatSnackBar);
 
-  // Columnas actualizadas para tu proyecto
-  readonly displayedColumns = [
-    'nombre',
-    'descripcion',
-    'acciones',
-  ];
-  
+  readonly displayedColumns = ['nombre', 'descripcion', 'acciones'];
   readonly dataSource = new MatTableDataSource<TipoHabitacionRead>([]);
   loading = true;
 
   @ViewChild(MatPaginator) set matPaginator(p: MatPaginator) {
-  if (p) {
-    this.paginator = p;
-    this.dataSource.paginator = p;
+    if (p) {
+      this.paginator = p;
+      this.dataSource.paginator = p;
+    }
   }
-}
 
-paginator!: MatPaginator;
+  paginator!: MatPaginator;
 
   ngAfterViewInit(): void {
     this.dataSource.paginator = this.paginator;
@@ -59,6 +54,14 @@ paginator!: MatPaginator;
 
   constructor() {
     this.reload();
+  }
+
+  filtrar(query: string): void {
+    const q = query.trim().toLowerCase();
+    this.dataSource.filterPredicate = (row: TipoHabitacionRead) =>
+      row.nombre_tipo.toLowerCase().includes(q) ||
+      (row.descripcion ?? '').toLowerCase().includes(q);
+    this.dataSource.filter = q || '';
   }
 
   reload(): void {
@@ -93,14 +96,13 @@ paginator!: MatPaginator;
 
   eliminar(row: TipoHabitacionRead): void {
     if (!confirm(`¿Eliminar el tipo de habitación: ${row.nombre_tipo}?`)) return;
-    
-    // Ajusta id_tipo_habitacion según el nombre real en tu modelo
     this.svc.delete(row.id_tipo).subscribe({
       next: () => {
         this.snack.open('Tipo de habitación eliminado', 'OK', { duration: 3000 });
         this.reload();
       },
-      error: (err: HttpErrorResponse) => this.snack.open(this.msg(err), 'Cerrar', { duration: 6000 }),
+      error: (err: HttpErrorResponse) =>
+        this.snack.open(this.msg(err), 'Cerrar', { duration: 6000 }),
     });
   }
 
