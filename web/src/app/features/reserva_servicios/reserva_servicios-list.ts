@@ -14,7 +14,7 @@ import { filter } from 'rxjs/operators';
 
 import { ServiciosAdicionalesService } from '../../core/services/servicios_adicionales.service';
 import { ServiciosAdicionalesRead } from '../../models/api.models';
-import { ServiciosAdicionalesDialogComponent, ServiciosAdicionalesDialogData } from './servicios_adicionales-dialog';
+import { ServiciosAdicionalesDialogComponent, ServiciosAdicionalesDialogData } from './reserva_servicios-dialog';
 
 @Component({
   selector: 'app-servicios_adicionales-list',
