@@ -1,5 +1,3 @@
-/** Contratos alineados con `src/api/*.py` del backend FastAPI. */
-
 export interface UsuarioRead {
   id_usuario: string;
   nombre: string;
@@ -111,62 +109,47 @@ export interface HabitacionUpdate {
   disponible: boolean;
   id_usuario_edita: string;
 }
-/*
-export interface DetallePedidoRead {
-  id_detalle_pedido: string;
-  id_pedido: string;
-  id_producto: string;
-  nombre: string;
-  descripcion: string | null;
-  estado: string | null;
+
+export interface ReservaServiciosRead {
+  id_reserva:   string;
+  id_servicio:  string;  
+  cantidad:     number;
+}
+ 
+export interface ReservaServiciosCreate {
+  id_reserva:  string;
+  id_servicio: string;
+  cantidad:    number;
+}
+ 
+export interface ReservaServiciosUpdate {
+  cantidad: number;
+}
+ 
+
+export interface ReservaRead {
+  id_reserva: string;
+  id_usuario: string;
+  id_habitacion: string;
+  fecha_entrada: string;
+  fecha_salida: string;
+  numero_de_personas: number;
 }
 
-export interface DetallePedidoCreate {
-  id_pedido: string;
-  id_producto: string;
-  nombre: string;
-  descripcion?: string | null;
-  estado?: string | null;
+export interface ReservaCreate {
+  id_usuario: string;
+  id_habitacion: string;
+  fecha_entrada: string;
+  fecha_salida: string;
+  numero_de_personas: number;
+  id_usuario_crea: string;
 }
 
-export interface DetallePedidoUpdate {
-  id_pedido?: string;
-  id_producto?: string;
-  nombre?: string;
-  descripcion?: string | null;
-  estado?: string | null;
-}
-
-export interface PagoRead {
-  id_pago: string;
-  id_pedido: string;
-  nombre: string;
-  descripcion: string | null;
-  estado: string | null;
-  referencia: string;
-  tipo_pago: string;
-  fecha_creacion: string | null;
-  fecha_edicion: string | null;
-  id_usuario_creacion: string;
-  id_usuario_edita: string | null;
-}
-
-export interface PagoCreate {
-  id_pedido: string;
-  nombre: string;
-  descripcion?: string | null;
-  estado?: string | null;
-  referencia: string;
-  tipo_pago: string;
-  id_usuario_creacion: string;
-}
-
-export interface PagoUpdate {
-  id_pedido?: string;
-  nombre?: string;
-  descripcion?: string | null;
-  estado?: string | null;
-  referencia?: string;
-  tipo_pago?: string;
+export interface ReservaUpdate {
+  id_usuario: string;
+  id_habitacion: string;
+  fecha_entrada: string;
+  fecha_salida: string;
+  numero_de_personas: number;
   id_usuario_edita: string;
-}*/
+}
